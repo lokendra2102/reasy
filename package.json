@@ -1,0 +1,31 @@
+{
+  "name": "reasy",
+  "version": "1.0.0",
+  "description": "HTTP requests made easier using reasy.",
+  "main": "main.js",
+  "scripts": {
+    "dev": "nodemon ./Source/main.js",
+    "build": "webpack --mode production"
+  },
+  "keywords": [
+    "HTTP",
+    "FETCH",
+    "PROMISES",
+    "NODE",
+    "HTTP"
+  ],
+  "author": "slokendra2102@gmail.com",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.24.0",
+    "babel-loader": "^9.1.3",
+    "nodemon": "^3.1.0",
+    "terser-webpack-plugin": "^5.3.10",
+    "typescript": "^5.4.2",
+    "webpack": "^5.90.3",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "ts-node": "^10.9.2"
+  }
+}

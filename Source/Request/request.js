@@ -126,6 +126,7 @@ const all = (requestList) => {
     }
     return new Promise((resolve, reject) => {
         let responseData = [];
+        defaults.abortControllers = [];
         Promise.all(requestList.map(async(ele, index) => {
             await ele.then(data => {
                 responseData.push(data)

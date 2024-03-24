@@ -1,7 +1,7 @@
 // Create Abort Controller
-const defaults = require("../Defaults/defaults")
+import { defaults } from '../Defaults/defaults';
 
-const abortSignal = (isAbortController = true, timeout = -1) => {
+export const abortSignal = (timeout = -1, num : number) => {
     const abort = new AbortController();
     defaults.headers = {
         ...defaults.headers,
@@ -10,19 +10,16 @@ const abortSignal = (isAbortController = true, timeout = -1) => {
     if (defaults.abortTime || timeout >= 0) {
         setTimeout(() => {
             abort.abort()
+            defaults.abortControllers.delete(num);
             delete defaults.headers["abort"]
         }, timeout);
     }
+    defaults.abortControllers.set(num, abort);
 
     return abort;
 }
 
-const registerAbortController = (abortTime  = 0) => {
+export const registerAbortController = (abortTime = 0) => {
     defaults.controller = true;
     defaults.abortTime = typeof abortTime === "number" && abortTime > 0 ? abortTime : false;
-}
-
-module.exports = {
-    abortSignal, 
-    registerAbortController
 }

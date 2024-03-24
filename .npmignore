@@ -1,2 +1,8 @@
 Source/
 webpack.config.js
+tsconfig.json
+node_modules/
+.vscode/
+TS/
+.gitignore
+package-lock.json

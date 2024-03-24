@@ -483,10 +483,10 @@ var eraseRegitser = /** @class */ (function () {
             defaults_1.defaults.controller = false;
             defaults_1.defaults.abortTime = false;
         };
-        this.removePostRequestHook = function () {
+        this.postRequest = function () {
             defaults_1.defaults.postRequestHook = null;
         };
-        this.removePreRequestHook = function () {
+        this.preRequest = function () {
             defaults_1.defaults.preRequestHook = null;
         };
     }

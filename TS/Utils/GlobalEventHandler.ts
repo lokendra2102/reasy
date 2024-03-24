@@ -58,11 +58,11 @@ class eraseRegitser {
         defaults.abortTime = false
     }
     
-    removePostRequestHook = () => {
+    postRequest = () => {
         defaults.postRequestHook = null
     }
     
-    removePreRequestHook = () => {
+    preRequest = () => {
         defaults.preRequestHook = null
     }
 }

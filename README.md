@@ -11,22 +11,97 @@
 - Timeouts (Global Timeout and request level Timeout options are available) 
     
     `NOTE : Request level timeouts are given priority when both global timeout and request level timeout present`
-- Automatic parsing of JSON response
+- Automatic parsing of multiple response formats. ***(JSON, Text, Blob, ArrayBuffer)***. Special handling can be registered via hooks.
 
 ## Methods Available
 
 ### API Calls
 
-- #### sendRequest()
-    - sendRequest() method can be used to make API calls to server/url using reasy.
-    - sendRequest() takes two parameters ***URL*** and ***headers***.
-    - Result will be **Standard Response Format**, Developer will have full control over on success state.
+### ***reasy.request*** instance can be used to make API calls to server/url using reasy.
+- #### Instance
+    - Instance() takes two parameters ***URL*** and ***headers***.
+    - Instance can be create a request object and can be used to fire multiple API calls with same endpoint.
     - ***Example*** 
     \
     &nbsp;
     ```js
-    sendRequest(URL, {
-        "method": //method name,
+    const instance = reasy.request.instance(URL, {
+        "header": //method name,
+        // other request headers
+    })
+    instance.get()
+    instance.post("", {
+        "body" : //Data
+    })
+    /* can fire multiple calls */
+    ```
+
+- #### get()
+    - Get() takes two parameters ***URL*** and ***headers***.
+    - Result will be **Standard JSON Format**, Developer will have full control over it.
+    - ***Example*** 
+    \
+    &nbsp;
+    ```js
+    reasy.request.get(URL, {
+        "header": //method name,
+        // other request headers
+    })
+    ```
+- #### post()
+    - Post() takes three parameters ***URL***, ***body*** and ***headers***.
+    - ***body*** should be JSON object. Form Data isn't supported as of now. Will include support in near future.
+    - Result will be **Standard JSON Format**, Developer will have full control over it.
+    - ***Example*** 
+    \
+    &nbsp;
+    ```js
+    reasy.request.post(URL, {
+        "data" : //data
+    }, {
+        "header": //method name,
+        // other request headers
+    })
+    ```
+- #### put()
+    - Put() takes three parameters ***URL***, ***body*** and ***headers***.
+    - ***body*** should be JSON object. Form Data isn't supported as of now. Will include support in near future.
+    - Result will be **Standard JSON Format**, Developer will have full control over it.
+    - ***Example*** 
+    \
+    &nbsp;
+    ```js
+    reasy.request.put(URL, {
+        "data" : //data
+    }, {
+        "header": //method name,
+        // other request headers
+    })
+    ```
+- #### patch()
+    - Patch() takes three parameters ***URL***, ***body*** and ***headers***.
+    - ***body*** should be JSON object. Form Data isn't supported as of now. Will include support in near future.
+    - Result will be **Standard JSON Format**, Developer will have full control over it.
+    - ***Example*** 
+    \
+    &nbsp;
+    ```js
+    reasy.request.patch(URL, {
+        "data" : //data
+    }, {
+        "header": //method name,
+        // other request headers
+    })
+    ```
+- #### delete()
+    - Delete() takes two parameters ***URL*** and ***headers***.
+    - Result will be **Standard JSON Format**, Developer will have full control over it.
+    - ***Example*** 
+    \
+    &nbsp;
+    ```js
+    reasy.request.delete(URL, {
+        "header": //method name,
         // other request headers
     })
     ```
@@ -38,17 +113,11 @@
     \
     &nbsp;
     ```js
-    all([
-        sendRequest(URL, {
-            "method": //method name,
+    reasy.request.all([
+        reasy.request.get(URL, {
             // other request headers
         }),
-        sendRequest(URL, {
-            "method": //method name,
-            // other request headers
-        }),
-        sendRequest(URL, {
-            "method": //method name,
+        reasy.request.get(URL, {
             // other request headers
         })
     ])
@@ -56,33 +125,33 @@
 
 ### Registering Globals
 
-- #### registerGlobalHeaders() 
-    - registerGlobalHeaders() method can be used to add defualt headers which will be passed to all the requests fired using reasy.
+- #### headers() 
+    - reasy.register.headers() method can be used to add defualt headers which will be passed to all the requests fired using reasy.
     \
     &nbsp;
     ```js
-    registerGlobalHeaders({
+    reasy.register.headers({
         'header name' : 'header value',
         // other headers
     })
     ```
 
-- #### registerDefaultDomain()
-    - registerDefaultDomain() method can be used to add defualt domain which will be appended to all the requests fired using reasy.
+- #### domain()
+    - reasy.register.domain() method can be used to add defualt domain which will be appended to all the requests fired using reasy.
     \
     &nbsp;
     ```js
-    registerDefaultDomain(URL)
+    reasy.register.domain(URL)
     ```
 
-- #### registerPostRequestHook() 
-    - registerPostRequestHook() method is an interceptor which can be used to override the default response handling of reasy as per user expects it to be.
+- #### postRequest() 
+    - reasy.interceptor.postRequest() method is an interceptor which can be used to override the default response handling of reasy as per user expects it to be.
     
     ``This hook can modify only the response returned by the server. Unknown Error handling will not be modified such as aborting request.``
     \
     &nbsp;
     ```js
-    registerPostRequestHook((response, success, failure) => {
+    postRequest((response, success, failure) => {
         if (!response.ok) {
             // Failure Callback
             failure(response); //send data between parenthesis
@@ -93,13 +162,13 @@
     })
     ```
 
-- #### registerPreRequestHook()
-    - registerPreRequestHook() method is an interceptor which can be used to modify the request before making the call.
+- #### preRequest()
+    - reasy.interceptor.preRequest() method is an interceptor which can be used to modify the request before making the call.
     - We will be using native [`Request`](https://developer.mozilla.org/en-US/docs/Web/API/Request) object. Refer the following article on how to modify [`Request`](https://developers.cloudflare.com/workers/examples/modify-request-property/).
     \
     &nbsp;
     ```js
-    registerPreRequestHook((request) => {
+    reasy.interceptor.preRequest((request) => {
         const newRequest = new Request(
             {modifiedChanges}, // Add changes need to be done before firing request.
             request
@@ -119,42 +188,42 @@
 
 ### Removing Globals
 
-- #### removeGlobalHeaders() 
-    - removeGlobalHeaders() method can be used to remove any defualt headers present in globalHeaders object.
+- #### headers() 
+    - reasy.erase.headers() method can be used to remove any defualt headers present in globalHeaders object.
     \
     &nbsp;
     ```js
-    removeAbortController()
+    reasy.erase.headers()
     ```
 
-- #### removeDefaultDomain()
-    - removeDefaultDomain() method can be used to remove defualt domain added previously.
+- #### domain()
+    - reasy.erase.domain() method can be used to remove defualt domain added previously.
     \
     &nbsp;
     ```js
-    removeDefaultDomain()
+    reasy.erase.domain()
     ```
 
-- #### removePostRequestHook() 
-    - removePostRequestHook() method is used to remove the post response hook interceptor and sets back to default response handling.
+- #### postRequest() 
+    - reasy.erase.postRequest() method is used to remove the post response hook interceptor and sets back to default response handling.
     \
     &nbsp;
     ```js
-    removePostRequestHook()
+    reasy.erase.postRequest()
     ```
 
-- #### removePreRequestHook()
-    - removePreRequestHook() method is used to remove the pre request hook interceptor and sets back to default request handling.
+- #### preRequest()
+    - reasy.erase.preRequest() method is used to remove the pre request hook interceptor and sets back to default request handling.
     \
     &nbsp;
     ```js
-    removePreRequestHook()
+    reasy.erase.preRequest()
     ```
 
 - #### removeAbortController() 
-    - removeAbortController() method will remove global timeout for requests fired using reasy. Timeout still can be used in request level.
+    - reasy.erase.removeAbortController() method will remove global timeout for requests fired using reasy. Timeout still can be used in request level.
     \
     &nbsp;
     ```js
-    removeAbortController()
+    reasy.erase.removeAbortController()
     ```

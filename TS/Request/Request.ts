@@ -1,16 +1,34 @@
 import { abortSignal } from "../Utils/AbortController";
 import { TypedJSONObject, defaults } from '../Defaults/defaults';
-import { errorMessage, checkIfValidParams, checkIfValidJson } from "../Utils/Validation";
+import { errorMessage, checkIfValidParams, checkIfValidJson, validateContentType, isValidUrl } from "../Utils/Validation";
 import { ReasyError } from "../Error/ReasyError";
 
 class requestHandler {
 
-    private URL: string | URL;
-    private headers: TypedJSONObject;
+    private _URL: string | URL;
+    private _headers: TypedJSONObject;
 
     constructor(URL?: string | URL, headers?: TypedJSONObject) {
-        this.URL = !URL ? "" : URL;
-        this.headers = !headers ? {} : headers;
+        let validURL : URL | string | null = URL ? isValidUrl(URL) : "";
+        this._URL = validURL ? (typeof validURL !== "string" ? validURL.href : validURL) : "";
+        this._headers = !headers ? {} : headers;
+    }
+
+    getURL(){
+        return this._URL;
+    }
+
+    getHeaders(){
+        return this._headers;
+    }
+    
+    setURL(URL : string | URL){
+        let validURL : URL | string | null = URL ? isValidUrl(URL) : "";
+        this._URL = validURL ? (typeof validURL !== "string" ? validURL.href : validURL) : "";
+    }
+
+    setHeaders(headers : TypedJSONObject){
+        this._headers = !headers ? {} : headers;
     }
 
     private responseBodyHandler(data: Response, responseObj: TypedJSONObject, contentType: string, resolve: any, reject: any) {
@@ -19,7 +37,7 @@ class requestHandler {
                 case "json":
                     data.json().then(json => {
                         responseObj.response.data = json;
-                        resolve(responseObj);
+                        resolve(responseObj.response);
                     });
                     break;
                 case "text":
@@ -42,6 +60,9 @@ class requestHandler {
                         resolve(responseObj);
                     })
                     break;
+                default:
+                    responseObj.response.data = data
+                    resolve(responseObj)
             }
         } catch (error) {
             reject(responseObj)
@@ -54,7 +75,7 @@ class requestHandler {
         };
         data.headers.forEach((value, key) => {
             headersJson[key] = value
-        })        
+        })
         let responseObj: TypedJSONObject = {
             "response": {
                 "status": data.status,
@@ -63,11 +84,11 @@ class requestHandler {
                 "headers": headersJson
             }
         }
-        if(data.status === 404){
+        if (data.status === 404) {
             responseObj.response.method = headers.method;
             reject(responseObj)
         }
-        const contentType = headers.responseType ? headers.responseType : "json";
+        const contentType = headers.responseType ? headers.responseType : validateContentType(data.headers.get("content-type"));
         if (contentType) {
             this.responseBodyHandler(data, responseObj, contentType, resolve, reject);
         } else {
@@ -84,34 +105,28 @@ class requestHandler {
                 errorJson = errorJson["cause"]
             }
             errorJson = {
-                request: {
-                    ...errorJson,
-                    message: err.message,
-                    url: urls.origin,
-                    path: urls.pathname
-                }
+                ...errorJson,
+                message: err.message,
+                url: urls.origin + urls.pathname
             }
             reject(errorJson)
         } else {
             let errorObj = {
-                request: {
-                    "stackTrace": JSON.stringify(err),
-                    url: urls.origin,
-                    path: urls.pathname
-                }
+                "stackTrace": JSON.stringify(err),
+                url: urls.origin + urls.pathname
             }
             reject(errorObj)
         }
     }
 
     private validateURL(url: string | URL) {
-        if (!url && !this.URL) {
+        if (!url && !this.getURL()) {
             throw new ReasyError("Do register a reasy instance or provide a URL in method scope", 401);
         }
         if (!url) {
-            return url = this.URL;
+            return this.getURL();
         }
-        return url;
+        return this.getURL() ? this.getURL().toString() + url.toString() : url;
     }
 
     // Fires single HTTP/HTTPS requests
@@ -119,12 +134,12 @@ class requestHandler {
         const start = performance.now();
         headers = { ...defaults.headers, ...headers }
         if (defaults.domain) {
+            url = typeof url === "string" && url[0] !== "/" ? "/" + url : url;
             url = defaults.domain.toString() + url;
         }
         if (headers.timeout != null && headers.timeout <= 0) {
             throw new ReasyError(errorMessage("TimeOut", true), 422);
         }
-        console.log(url);
         let isValidParams: string = checkIfValidParams(url, headers)
         if (!isValidParams) {
             let key = Math.floor(Math.random() * 99999)
@@ -181,55 +196,44 @@ class requestHandler {
 
     get(url: string | URL = "", headers: TypedJSONObject = {}) {
         url = this.validateURL(url);
-        headers = {
-            ...headers,
-            ...this.headers,
-            "method": "GET"
-        }
+        headers = this.constructHeaders("GET", headers, {});
         return this.sendRequest(url, headers)
     }
 
     post(url: string | URL = "", body: TypedJSONObject = {}, headers: TypedJSONObject = {}) {
         url = this.validateURL(url);
-        headers = {
-            ...headers,
-            ...this.headers,
-            "method": "POST",
-            "body" : JSON.stringify(body)
-        }
+        headers = this.constructHeaders("POST", headers, body);
         return this.sendRequest(url, headers)
     }
 
     put(url: string | URL = "", body: TypedJSONObject = {}, headers: TypedJSONObject = {}) {
         url = this.validateURL(url);
-        headers = {
-            ...headers,
-            ...this.headers,
-            "method": "PUT",
-            "body" : JSON.stringify(body)
-        }
+        headers = this.constructHeaders("PUT", headers, body);
         return this.sendRequest(url, headers)
     }
 
     patch(url: string | URL = "", body: TypedJSONObject = {}, headers: TypedJSONObject = {}) {
         url = this.validateURL(url);
-        headers = {
-            ...headers,
-            ...this.headers,
-            "method": "PATCH",
-            "body" : JSON.stringify(body)
-        }
+        headers = this.constructHeaders("PATCH", headers, body);
         return this.sendRequest(url, headers)
     }
 
     delete(url: string | URL = "", headers: TypedJSONObject = {}) {
         url = this.validateURL(url);
-        headers = {
-            ...headers,
-            ...this.headers,
-            "method": "DELETE"
-        }
+        headers = this.constructHeaders("DELETE", headers, {});
         return this.sendRequest(url, headers)
+    }
+
+    private constructHeaders(method: string, headers: TypedJSONObject, body: TypedJSONObject) : TypedJSONObject{
+        let res: TypedJSONObject = {
+            ...headers,
+            ...this.getHeaders(),
+            "method" : method
+        }
+        if(body){
+            res.body = JSON.stringify(body)
+        }
+        return res;
     }
 
     // Fires multiple HTTP/HTTPS requests

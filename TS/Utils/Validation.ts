@@ -48,3 +48,7 @@ export const checkIfValidJson = (data: string) => {
         return false;
     }
 }
+
+export const validateContentType = (contentType : string | null) => {
+    return contentType == null ? "" : contentType.includes("text") ? "text" : contentType.includes("json") ? "json" : "";
+}

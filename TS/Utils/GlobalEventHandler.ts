@@ -12,12 +12,18 @@ class registerGlobal {
         }
     }
 
-    domain = (data: string | URL) => {
-        if (!isValidUrl(data)) {
+    domain = (data: string | null | URL) => {
+        data = data ? isValidUrl(data) : null;
+        if (!data) {
             throw new ReasyError(errorMessage("Domain"), 422);
         } else {
-            defaults.domain = data;
+            defaults.domain = data.origin;
         }
+    }
+
+    abortController = (abortTime: number = 0) => {
+        defaults.controller = true;
+        defaults.abortTime = abortTime > 0 ? abortTime : false;
     }
 }
 
@@ -50,7 +56,7 @@ class eraseRegitser {
         defaults.headers = {}
     }
 
-    removeAbortController = () => {
+    abortController = () => {
         if (!defaults.controller) {
             throw new ReasyError(abortControllerNotRegisteredError("Abort Controller"), 404);
         }

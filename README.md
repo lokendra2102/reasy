@@ -1,4 +1,4 @@
-# Reasy
+# 🚀 Reasy
 
 #### Reasy - Requests made Easy, is a light-weight promise bases HTTP client library. Reasy is made for javascript be it client or server side technologies (Isomorphic). It internally uses fetch API to make API calls over the network.
 
@@ -144,6 +144,15 @@
     reasy.register.domain(URL)
     ```
 
+- #### registerAbortController() 
+    - registerAbortController() method can be used to add global timeout for requests fired using reasy.
+    - This method requires `abortTime` param to be passed along.
+    \
+    &nbsp;
+    ```js
+    reasy.register.abortController('{{Time in ms}}')
+    ```
+
 - #### postRequest() 
     - reasy.interceptor.postRequest() method is an interceptor which can be used to override the default response handling of reasy as per user expects it to be.
     
@@ -151,7 +160,7 @@
     \
     &nbsp;
     ```js
-    postRequest((response, success, failure) => {
+    reasy.interceptor.postRequest((response, success, failure) => {
         if (!response.ok) {
             // Failure Callback
             failure(response); //send data between parenthesis
@@ -175,15 +184,6 @@
         );
         return newRequest
     })
-    ```
-
-- #### registerAbortController() 
-    - registerAbortController() method can be used to add global timeout for requests fired using reasy.
-    - This method requires `abortTime` param to be passed along.
-    \
-    &nbsp;
-    ```js
-    registerAbortController('{{Time in ms}}')
     ```
 
 ### Removing Globals
@@ -220,10 +220,12 @@
     reasy.erase.preRequest()
     ```
 
-- #### removeAbortController() 
+- #### abortController() 
     - reasy.erase.removeAbortController() method will remove global timeout for requests fired using reasy. Timeout still can be used in request level.
     \
     &nbsp;
     ```js
-    reasy.erase.removeAbortController()
+    reasy.erase.abortController()
     ```
+
+### &nbsp; For any issues kindly raise an issue or connect with me via LinkedIn.

@@ -18,8 +18,3 @@ export const abortSignal = (timeout = -1, num : number) => {
 
     return abort;
 }
-
-export const registerAbortController = (abortTime = 0) => {
-    defaults.controller = true;
-    defaults.abortTime = typeof abortTime === "number" && abortTime > 0 ? abortTime : false;
-}

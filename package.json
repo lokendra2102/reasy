@@ -1,6 +1,6 @@
 {
   "name": "reasy",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "HTTP requests made easier using reasy.",
   "main": "main.js",
   "scripts": {
@@ -31,6 +31,7 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
+    "express": "^4.19.2",
     "ts-node": "^10.9.2"
   },
   "files": [

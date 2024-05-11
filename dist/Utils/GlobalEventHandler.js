@@ -70,7 +70,7 @@ var eraseRegitser = /** @class */ (function () {
             }
             defaults_1.defaults.headers = {};
         };
-        this.removeAbortController = function () {
+        this.abortController = function () {
             if (!defaults_1.defaults.controller) {
                 throw new ReasyError_1.ReasyError((0, Validation_1.abortControllerNotRegisteredError)("Abort Controller"), 404);
             }

@@ -2,7 +2,7 @@
 
 #### Reasy - Requests made Easy, is a light-weight promise bases HTTP client library. Reasy is made for javascript be it client or server side technologies (Isomorphic). It internally uses fetch API to make API calls over the network.
 
-### Features
+## 🌐  Features
 
 - Promise based API requests.
 - Uses **Fetch API**, which is modular and supported by native Javascript
@@ -13,9 +13,9 @@
     `NOTE : Request level timeouts are given priority when both global timeout and request level timeout present`
 - Automatic parsing of multiple response formats. ***(JSON, Text, Blob, ArrayBuffer)***. Special handling can be registered via hooks.
 
-## Methods Available
+## ❗Methods Available
 
-### API Calls
+### API Calls ✨ ✨
 
 ### ***reasy.request*** instance can be used to make API calls to server/url using reasy.
 - #### Instance
@@ -44,7 +44,6 @@
     &nbsp;
     ```js
     reasy.request.get(URL, {
-        "header": //method name,
         // other request headers
     })
     ```
@@ -59,8 +58,7 @@
     reasy.request.post(URL, {
         "data" : //data
     }, {
-        "header": //method name,
-        // other request headers
+        // request headers
     })
     ```
 - #### put()
@@ -74,8 +72,7 @@
     reasy.request.put(URL, {
         "data" : //data
     }, {
-        "header": //method name,
-        // other request headers
+        // request headers
     })
     ```
 - #### patch()
@@ -89,8 +86,7 @@
     reasy.request.patch(URL, {
         "data" : //data
     }, {
-        "header": //method name,
-        // other request headers
+        // request headers
     })
     ```
 - #### delete()
@@ -101,7 +97,6 @@
     &nbsp;
     ```js
     reasy.request.delete(URL, {
-        "header": //method name,
         // other request headers
     })
     ```
@@ -115,15 +110,52 @@
     ```js
     reasy.request.all([
         reasy.request.get(URL, {
-            // other request headers
+            // request headers
         }),
         reasy.request.get(URL, {
-            // other request headers
+            // request headers
         })
     ])
     ```
+### File Upload ✨ ✨
+- #### upload() - POST
+    - upload() takes three parameters ***URL***, ***body*** and ***headers***.
+    - Result will be **Standard JSON Format**, Developer will have full control over it or can also add responseType in header list so the response will be transformed that way.
+    - ***Example*** 
+    \
+    &nbsp;
+    ```js
+    reasy.request.file(URL, body, {
+        // request headers
+    }).upload()
+    ```
 
-### Registering Globals
+- #### update() - PUT
+    - update() takes three parameters ***URL***, ***body*** and ***headers***.
+    - Result will be **Standard JSON Format**, Developer will have full control over it or can also add responseType in header list so the response will be transformed that way.
+    - ***Example*** 
+    \
+    &nbsp;
+    ```js
+    reasy.request.file(URL, body, {
+        // request headers
+    }).update()
+    ```
+
+- #### download() - GET
+    - download() takes two parameters ***URL***, and ***headers***.
+    - Result will be **Standard JSON Format**, Developer will have full control over it or can also add responseType in header list so the response will be transformed that way.
+    - Body should be empty (2nd paramter) for download request.
+    - ***Example*** 
+    \
+    &nbsp;
+    ```js
+    reasy.request.file(URL, {}, {
+        // request headers
+    }).download()
+    ```
+
+### Registering Globals ✨ ✨
 
 - #### headers() 
     - reasy.register.headers() method can be used to add defualt headers which will be passed to all the requests fired using reasy.
@@ -186,7 +218,7 @@
     })
     ```
 
-### Removing Globals
+### Removing Globals ✨ ✨
 
 - #### headers() 
     - reasy.erase.headers() method can be used to remove any defualt headers present in globalHeaders object.
@@ -228,4 +260,6 @@
     reasy.erase.abortController()
     ```
 
-### &nbsp; For any issues kindly raise an issue or connect with me via LinkedIn.
+### 🗣️🗣️ &nbsp; For any issues kindly raise an issue or connect with me via LinkedIn.
+### <p style="text-align:center">➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖</p>
+## 📢  Will update Open Source Policy. 🔜

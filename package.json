@@ -1,5 +1,5 @@
 {
-  "name": "reasy",
+  "name": "reasy-requests",
   "version": "1.0.1",
   "description": "HTTP requests made easier using reasy.",
   "main": "main.js",
@@ -42,5 +42,8 @@
     "type": "git",
     "url": "git+https://github.com/lokendra2102/reasy.git"
   },
-  "homepage": "https://github.com/lokendra2102/reasy#readme"
+  "homepage": "https://github.com/lokendra2102/reasy#readme",
+  "dependencies": {
+    "reasy-requests": "file:reasy-requests-1.0.2.tgz"
+  }
 }

@@ -10,6 +10,29 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -46,16 +69,12 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.reasy = void 0;
 var AbortController_1 = require("../Utils/AbortController");
 var defaults_1 = require("../Defaults/defaults");
 var Validation_1 = require("../Utils/Validation");
 var ReasyError_1 = require("../Error/ReasyError");
-var http_1 = __importDefault(require("http"));
 var requestHandler = /** @class */ (function () {
     function requestHandler(URL, headers) {
         var validURL = URL ? (0, Validation_1.isValidUrl)(URL) : "";
@@ -124,7 +143,7 @@ var requestHandler = /** @class */ (function () {
             "response": {
                 "status": data.status,
                 "statusText": data.statusText,
-                "url": data.url,
+                "url": data.url ? data.url : headersJson["url"],
                 "headers": headersJson
             }
         };
@@ -169,167 +188,177 @@ var requestHandler = /** @class */ (function () {
         return this.getURL() ? this.getURL().toString() + url.toString() : url;
     };
     // Fires single HTTP/HTTPS requests
-    requestHandler.prototype.sendRequest = function (url, headers, isFile) {
-        var _this = this;
-        if (url === void 0) { url = ""; }
-        if (headers === void 0) { headers = {}; }
-        if (isFile === void 0) { isFile = false; }
-        var start = performance.now();
-        headers = __assign(__assign({}, defaults_1.defaults.headers), headers);
-        if (defaults_1.defaults.domain) {
-            url = typeof url === "string" && url[0] !== "/" ? "/" + url : url;
-            url = defaults_1.defaults.domain.toString() + url;
-        }
-        if (headers.timeout != null && headers.timeout <= 0) {
-            throw new ReasyError_1.ReasyError((0, Validation_1.errorMessage)("TimeOut", true), 422);
-        }
-        var isValidParams = (0, Validation_1.checkIfValidParams)(url, headers);
-        if (!isValidParams) {
-            var key_1 = Math.floor(Math.random() * 99999);
-            if (defaults_1.defaults.controller || headers.timeout > 0) {
-                var controller = (0, AbortController_1.abortSignal)(headers.timeout > 0 ? headers.timeout : defaults_1.defaults.abortTime ? defaults_1.defaults.abortTime : -1, key_1);
-                headers = __assign(__assign(__assign({}, headers), defaults_1.defaults.headers), { signal: controller.signal });
-            }
-            var req_1 = this.createRequest(url, headers);
-            if (defaults_1.defaults.preRequestHook !== null) {
-                req_1 = defaults_1.defaults.preRequestHook(req_1);
-            }
-            return new Promise(function (resolve, reject) {
-                if (isFile) {
-                    if (typeof window === "undefined") {
-                        url = new URL(url);
-                        var body = headers.body;
-                        var method = headers.method;
-                        delete headers.body;
-                        delete headers.method;
-                        var options = {
-                            hostname: url.hostname,
-                            port: url.port,
-                            path: url.pathname,
-                            method: method,
-                            headers: __assign({ 'Content-Type': (method === "POST" || method === "PUT") ? "application/json" : "text/plain" }, headers)
-                        };
-                        var req_2 = http_1.default.request(options, function (res) {
-                            res.setEncoding('utf8');
-                            var data;
-                            ;
-                            res.on('data', function (chunk) {
-                                var _a;
-                                if ((_a = res.statusCode) === null || _a === void 0 ? void 0 : _a.toString().startsWith("20")) {
-                                    data = chunk;
-                                }
-                            });
-                            res.on('end', function () {
-                                var body = JSON.stringify(data);
-                                var response = new Response(body, {
-                                    status: res.statusCode,
-                                    statusText: res.statusMessage,
-                                    headers: _this.convertHeaders(res.headers),
-                                });
-                                try {
-                                    if (res.statusCode) {
-                                        if (res.statusCode > 400) {
-                                            throw new ReasyError_1.ReasyError(res.statusMessage ? res.statusMessage : "Error while uploading file.", 500);
-                                        }
-                                        else {
-                                            var end = performance.now();
-                                            if (defaults_1.defaults.controller || headers.timeout > 0) {
-                                                defaults_1.defaults.abortControllers.delete(key_1);
-                                            }
-                                            if (defaults_1.defaults.postRequestHook !== null) {
-                                                defaults_1.defaults.postRequestHook(response, resolve, reject);
+    requestHandler.prototype.sendRequest = function () {
+        return __awaiter(this, arguments, void 0, function (url, headers, isFile) {
+            var http, start, isValidParams, key_1, controller, req_1;
+            var _this = this;
+            if (url === void 0) { url = ""; }
+            if (headers === void 0) { headers = {}; }
+            if (isFile === void 0) { isFile = false; }
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, Promise.resolve().then(function () { return __importStar(require("../Utils/http_s")); })];
+                    case 1:
+                        http = (_a.sent()).default;
+                        start = performance.now();
+                        headers = __assign(__assign({}, defaults_1.defaults.headers), headers);
+                        if (defaults_1.defaults.domain.toString().trim() !== "") {
+                            url = defaults_1.defaults.domain.toString().slice(-1) !== "/" ? defaults_1.defaults.domain.toString() + "/" + url : defaults_1.defaults.domain.toString() + url;
+                        }
+                        if (headers.timeout != null && headers.timeout <= 0) {
+                            throw new ReasyError_1.ReasyError((0, Validation_1.errorMessage)("TimeOut", true), 422);
+                        }
+                        isValidParams = (0, Validation_1.checkIfValidParams)(url, headers);
+                        if (!isValidParams) {
+                            key_1 = Math.floor(Math.random() * 99999);
+                            if (defaults_1.defaults.controller || headers.timeout > 0) {
+                                controller = (0, AbortController_1.abortSignal)(headers.timeout > 0 ? headers.timeout : defaults_1.defaults.abortTime ? defaults_1.defaults.abortTime : -1, key_1);
+                                headers = __assign(__assign(__assign({}, headers), defaults_1.defaults.headers), { signal: controller.signal });
+                            }
+                            req_1 = this.createRequest(url, headers);
+                            if (defaults_1.defaults.preRequestHook !== null) {
+                                req_1 = defaults_1.defaults.preRequestHook(req_1);
+                            }
+                            return [2 /*return*/, new Promise(function (resolve, reject) { return __awaiter(_this, void 0, void 0, function () {
+                                    var body, method, options, httpProtocol, req_2, instance_1, xhr_1, body, method, _i, _a, _b, header, value;
+                                    var _this = this;
+                                    return __generator(this, function (_c) {
+                                        if (isFile) {
+                                            if (typeof window === "undefined" && http.http && http.https) {
+                                                url = new URL(url);
+                                                body = headers.body;
+                                                method = headers.method;
+                                                delete headers.body;
+                                                delete headers.method;
+                                                options = {
+                                                    hostname: url.hostname,
+                                                    port: url.port,
+                                                    path: url.pathname,
+                                                    method: method,
+                                                    headers: __assign({ 'Content-Type': (method === "POST" || method === "PUT") ? "application/json" : "text/plain" }, headers)
+                                                };
+                                                httpProtocol = url.protocol.startsWith("https") ? http.https : http.http;
+                                                req_2 = httpProtocol.request(options, function (res) {
+                                                    res.setEncoding('utf8');
+                                                    var data;
+                                                    res.on('data', function (chunk) {
+                                                        data = chunk;
+                                                    });
+                                                    res.on('end', function () {
+                                                        var body = data;
+                                                        var response = new Response(body, {
+                                                            status: res.statusCode,
+                                                            statusText: res.statusMessage,
+                                                            headers: _this.convertHeaders(res.headers, url),
+                                                        });
+                                                        try {
+                                                            if (res.statusCode) {
+                                                                var end = performance.now();
+                                                                if (defaults_1.defaults.controller || headers.timeout > 0) {
+                                                                    defaults_1.defaults.abortControllers.delete(key_1);
+                                                                }
+                                                                if (defaults_1.defaults.postRequestHook !== null) {
+                                                                    defaults_1.defaults.postRequestHook(response, resolve, reject);
+                                                                }
+                                                                else {
+                                                                    _this.responseInterceptor(start, end, response, headers, resolve, reject);
+                                                                }
+                                                            }
+                                                        }
+                                                        catch (error) {
+                                                            _this.errorInterceptor(error, url, reject);
+                                                        }
+                                                    });
+                                                });
+                                                req_2.on('error', function (e) {
+                                                    _this.errorInterceptor(e, url, reject);
+                                                });
+                                                if (method === "POST" || method === "PUT") {
+                                                    req_2.write(body);
+                                                    req_2.end();
+                                                }
+                                                else {
+                                                    req_2.end();
+                                                }
                                             }
                                             else {
-                                                _this.responseInterceptor(start, end, response, headers, resolve, reject);
+                                                instance_1 = this;
+                                                xhr_1 = new XMLHttpRequest();
+                                                body = headers.body;
+                                                method = headers.method;
+                                                delete headers.body;
+                                                delete headers.method;
+                                                xhr_1.open(method, url, true);
+                                                for (_i = 0, _a = Object.entries(headers); _i < _a.length; _i++) {
+                                                    _b = _a[_i], header = _b[0], value = _b[1];
+                                                    xhr_1.setRequestHeader(header, value);
+                                                }
+                                                xhr_1.onload = function () {
+                                                    var body = xhr_1.response;
+                                                    var response = new Response(body, {
+                                                        status: xhr_1.status,
+                                                        statusText: xhr_1.statusText,
+                                                        headers: instance_1.parseHeaders(xhr_1.getAllResponseHeaders(), url),
+                                                    });
+                                                    var end = performance.now();
+                                                    if (defaults_1.defaults.controller || headers.timeout > 0) {
+                                                        defaults_1.defaults.abortControllers.delete(key_1);
+                                                    }
+                                                    if (defaults_1.defaults.postRequestHook !== null) {
+                                                        defaults_1.defaults.postRequestHook(response, resolve, reject);
+                                                    }
+                                                    else {
+                                                        instance_1.responseInterceptor(start, end, response, headers, resolve, reject);
+                                                    }
+                                                };
+                                                xhr_1.onerror = function (e) {
+                                                    instance_1.errorInterceptor(e, url, reject);
+                                                };
+                                                xhr_1.send(body);
                                             }
                                         }
-                                    }
-                                }
-                                catch (error) {
-                                    _this.errorInterceptor(error, url, reject);
-                                }
-                            });
-                        });
-                        req_2.on('error', function (e) {
-                            _this.errorInterceptor(e, url, reject);
-                        });
-                        if (method === "POST" || method === "PUT") {
-                            req_2.write(body);
-                            req_2.end();
+                                        else {
+                                            fetch(req_1)
+                                                .then(function (data) {
+                                                var end = performance.now();
+                                                if (defaults_1.defaults.controller || headers.timeout > 0) {
+                                                    defaults_1.defaults.abortControllers.delete(key_1);
+                                                }
+                                                if (defaults_1.defaults.postRequestHook !== null) {
+                                                    defaults_1.defaults.postRequestHook(data, resolve, reject);
+                                                }
+                                                else {
+                                                    _this.responseInterceptor(start, end, data, headers, resolve, reject);
+                                                }
+                                            }).catch(function (err) {
+                                                _this.errorInterceptor(err, url, reject);
+                                            })
+                                                .catch(function (err) {
+                                                var errorObj = {
+                                                    "message": err.message
+                                                };
+                                                reject(errorObj);
+                                            });
+                                        }
+                                        return [2 /*return*/];
+                                    });
+                                }); })];
                         }
                         else {
-                            req_2.end();
+                            return [2 /*return*/, new Promise(function (resolve, reject) {
+                                    reject({
+                                        "status": "failure",
+                                        "message": (0, Validation_1.errorMessage)(isValidParams)
+                                    });
+                                })
+                                // throw new ReasyError(errorMessage(isValidParams), 422);
+                            ];
+                            // throw new ReasyError(errorMessage(isValidParams), 422);
                         }
-                    }
-                    else {
-                        var instance_1 = _this;
-                        var xhr_1 = new XMLHttpRequest();
-                        var body = headers.body;
-                        var method = headers.method;
-                        delete headers.body;
-                        delete headers.method;
-                        xhr_1.open(method, url, true);
-                        for (var _i = 0, _a = Object.entries(headers); _i < _a.length; _i++) {
-                            var _b = _a[_i], header = _b[0], value = _b[1];
-                            xhr_1.setRequestHeader(header, value);
-                        }
-                        xhr_1.onload = function () {
-                            var body = JSON.stringify(xhr_1.response);
-                            var response = new Response(body, {
-                                status: xhr_1.status,
-                                statusText: xhr_1.statusText,
-                                headers: instance_1.parseHeaders(xhr_1.getAllResponseHeaders()),
-                            });
-                            if (xhr_1.status <= 200) {
-                                var end = performance.now();
-                                if (defaults_1.defaults.controller || headers.timeout > 0) {
-                                    defaults_1.defaults.abortControllers.delete(key_1);
-                                }
-                                if (defaults_1.defaults.postRequestHook !== null) {
-                                    defaults_1.defaults.postRequestHook(response, resolve, reject);
-                                }
-                                else {
-                                    instance_1.responseInterceptor(start, end, response, headers, resolve, reject);
-                                }
-                            }
-                            else {
-                                console.error('Failed to upload file');
-                            }
-                        };
-                        xhr_1.onerror = function (e) {
-                            instance_1.errorInterceptor(e, url, reject);
-                        };
-                        xhr_1.send(body);
-                    }
-                }
-                else {
-                    fetch(req_1)
-                        .then(function (data) {
-                        var end = performance.now();
-                        if (defaults_1.defaults.controller || headers.timeout > 0) {
-                            defaults_1.defaults.abortControllers.delete(key_1);
-                        }
-                        if (defaults_1.defaults.postRequestHook !== null) {
-                            defaults_1.defaults.postRequestHook(data, resolve, reject);
-                        }
-                        else {
-                            _this.responseInterceptor(start, end, data, headers, resolve, reject);
-                        }
-                    }).catch(function (err) {
-                        _this.errorInterceptor(err, url, reject);
-                    })
-                        .catch(function (err) {
-                        var errorObj = {
-                            "message": err.message
-                        };
-                        reject(errorObj);
-                    });
+                        return [2 /*return*/];
                 }
             });
-        }
-        else {
-            throw new ReasyError_1.ReasyError((0, Validation_1.errorMessage)(isValidParams), 422);
-        }
+        });
     };
     requestHandler.prototype.createRequest = function (url, headers) {
         return new Request(url, headers);
@@ -340,9 +369,19 @@ var requestHandler = /** @class */ (function () {
     requestHandler.prototype.get = function (url, headers) {
         if (url === void 0) { url = ""; }
         if (headers === void 0) { headers = {}; }
-        url = this.validateURL(url);
-        headers = this.constructHeaders("GET", headers, {});
-        return this.sendRequest(url, headers);
+        try {
+            url = this.validateURL(url);
+            headers = this.constructHeaders("GET", headers, {});
+            return this.sendRequest(url, headers);
+        }
+        catch (error) {
+            return new Promise(function (resolve, reject) {
+                reject({
+                    "status": "failure",
+                    "message": error.message
+                });
+            });
+        }
     };
     requestHandler.prototype.post = function (url, body, headers) {
         if (url === void 0) { url = ""; }
@@ -375,17 +414,19 @@ var requestHandler = /** @class */ (function () {
         headers = this.constructHeaders("DELETE", headers, {});
         return this.sendRequest(url, headers);
     };
-    requestHandler.prototype.constructHeaders = function (method, headers, body, isFile) {
-        if (isFile === void 0) { isFile = false; }
+    requestHandler.prototype.constructHeaders = function (method, headers, body) {
         var res = __assign(__assign(__assign({}, headers), this.getHeaders()), { "method": method });
-        if (!isFile) {
+        if (body instanceof FormData) {
+            res.body = body;
         }
-        if (JSON.stringify(body) !== "{}") {
-            res.body = JSON.stringify(body);
+        else {
+            if (JSON.stringify(body) !== "{}") {
+                res.body = JSON.stringify(body);
+            }
         }
         return res;
     };
-    requestHandler.prototype.convertHeaders = function (headers) {
+    requestHandler.prototype.convertHeaders = function (headers, url) {
         var convertedHeaders = {};
         Object.entries(headers).forEach(function (_a) {
             var name = _a[0], value = _a[1];
@@ -396,9 +437,17 @@ var requestHandler = /** @class */ (function () {
                 convertedHeaders[name] = value.join(', ');
             }
         });
+        if (url) {
+            if (typeof url === "string") {
+                convertedHeaders.url = url;
+            }
+            else {
+                convertedHeaders.url = url.href;
+            }
+        }
         return convertedHeaders;
     };
-    requestHandler.prototype.parseHeaders = function (headersStr) {
+    requestHandler.prototype.parseHeaders = function (headersStr, url) {
         var headers = {};
         var headerLines = headersStr.trim().split('\n');
         headerLines.forEach(function (line) {
@@ -407,7 +456,7 @@ var requestHandler = /** @class */ (function () {
             var value = parts.join(':').trim();
             headers[key] = value;
         });
-        return this.convertHeaders(headers);
+        return this.convertHeaders(headers, url);
     };
     // Fires multiple HTTP/HTTPS requests
     requestHandler.prototype.all = function (requestList) {
@@ -415,7 +464,15 @@ var requestHandler = /** @class */ (function () {
             var _this = this;
             return __generator(this, function (_a) {
                 if (!Array.isArray(requestList)) {
-                    throw new ReasyError_1.ReasyError((0, Validation_1.errorMessage)("Request List"), 422);
+                    return [2 /*return*/, new Promise(function (resolve, reject) {
+                            reject({
+                                "status": "failure",
+                                "message": (0, Validation_1.errorMessage)("Request List")
+                            });
+                        })
+                        // throw new ReasyError(errorMessage("Request List"), 422);
+                    ];
+                    // throw new ReasyError(errorMessage("Request List"), 422);
                 }
                 return [2 /*return*/, new Promise(function (resolve, reject) {
                         var responseData = [];
@@ -467,21 +524,21 @@ var requestHandler = /** @class */ (function () {
         if (url === void 0) { url = ""; }
         if (headers === void 0) { headers = {}; }
         url = this.validateURL(url);
-        headers = this.constructHeaders("POST", headers, body, true);
+        headers = this.constructHeaders("POST", headers, body);
         return this.sendRequest(url, headers, true);
     };
     requestHandler.prototype.fileupdate = function (url, body, headers) {
         if (url === void 0) { url = ""; }
         if (headers === void 0) { headers = {}; }
         url = this.validateURL(url);
-        headers = this.constructHeaders("PUT", headers, body, true);
+        headers = this.constructHeaders("PUT", headers, body);
         return this.sendRequest(url, headers, true);
     };
     requestHandler.prototype.downloadFile = function (url, headers) {
         if (url === void 0) { url = ""; }
         if (headers === void 0) { headers = {}; }
         url = this.validateURL(url);
-        headers = this.constructHeaders("GET", headers, {}, true);
+        headers = this.constructHeaders("GET", headers, {});
         return this.sendRequest(url, headers, true);
     };
     return requestHandler;

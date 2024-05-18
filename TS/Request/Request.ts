@@ -2,7 +2,6 @@ import { abortSignal } from "../Utils/AbortController";
 import { TypedJSONObject, defaults } from '../Defaults/defaults';
 import { errorMessage, checkIfValidParams, checkIfValidJson, validateContentType, isValidUrl } from "../Utils/Validation";
 import { ReasyError } from "../Error/ReasyError";
-import http from 'http';
 
 class requestHandler {
 
@@ -81,7 +80,7 @@ class requestHandler {
             "response": {
                 "status": data.status,
                 "statusText": data.statusText,
-                "url": data.url,
+                "url": data.url ? data.url : headersJson["url"],
                 "headers": headersJson
             }
         }
@@ -131,12 +130,12 @@ class requestHandler {
     }
 
     // Fires single HTTP/HTTPS requests
-    private sendRequest(url: string | URL = "", headers: TypedJSONObject = {}, isFile = false) {
+    private async sendRequest(url: string | URL = "", headers: TypedJSONObject = {}, isFile = false) {
+        const http = (await import("../Utils/http_s")).default
         const start = performance.now();
         headers = { ...defaults.headers, ...headers }
-        if (defaults.domain) {
-            url = typeof url === "string" && url[0] !== "/" ? "/" + url : url;
-            url = defaults.domain.toString() + url;
+        if (defaults.domain.toString().trim() !== "") {
+            url = defaults.domain.toString().slice(-1) !== "/" ? defaults.domain.toString() + "/" + url : defaults.domain.toString() + url;
         }
         if (headers.timeout != null && headers.timeout <= 0) {
             throw new ReasyError(errorMessage("TimeOut", true), 422);
@@ -159,9 +158,9 @@ class requestHandler {
                 req = defaults.preRequestHook(req)
             }
 
-            return new Promise((resolve, reject) => {
+            return new Promise(async(resolve, reject) => {
                 if (isFile) {
-                    if (typeof window === "undefined") {
+                    if (typeof window === "undefined" && http.http && http.https) {
                         url = new URL(url);
                         let body = headers.body;
                         let method = headers.method;
@@ -177,35 +176,30 @@ class requestHandler {
                                 ...headers,
                             }
                         };
-                        const req = http.request(options, (res) => {
+                        let httpProtocol = url.protocol.startsWith("https") ? http.https : http.http;
+                        const req = httpProtocol.request(options, (res: any) => {
                             res.setEncoding('utf8');
-                            let data: string;;
-                            res.on('data', (chunk) => {
-                                if (res.statusCode?.toString().startsWith("20")) {
-                                    data = chunk;
-                                }
+                            let data: string;
+                            res.on('data', (chunk: string) => {
+                                data = chunk;
                             });
                             res.on('end', () => {
-                                let body: BodyInit = JSON.stringify(data);
+                                let body: BodyInit = data;
                                 let response = new Response(body, {
                                     status: res.statusCode,
                                     statusText: res.statusMessage,
-                                    headers: this.convertHeaders(res.headers),
+                                    headers: this.convertHeaders(res.headers, url),
                                 });
                                 try {
                                     if (res.statusCode) {
-                                        if (res.statusCode > 400) {
-                                            throw new ReasyError(res.statusMessage ? res.statusMessage : "Error while uploading file.", 500)
+                                        const end = performance.now();
+                                        if (defaults.controller || headers.timeout > 0) {
+                                            defaults.abortControllers.delete(key);
+                                        }
+                                        if (defaults.postRequestHook !== null) {
+                                            defaults.postRequestHook(response, resolve, reject)
                                         } else {
-                                            const end = performance.now();
-                                            if (defaults.controller || headers.timeout > 0) {
-                                                defaults.abortControllers.delete(key);
-                                            }
-                                            if (defaults.postRequestHook !== null) {
-                                                defaults.postRequestHook(response, resolve, reject)
-                                            } else {
-                                                this.responseInterceptor(start, end, response, headers, resolve, reject);
-                                            }
+                                            this.responseInterceptor(start, end, response, headers, resolve, reject);
                                         }
                                     }
                                 } catch (error: any) {
@@ -217,10 +211,10 @@ class requestHandler {
                         req.on('error', (e: Error) => {
                             this.errorInterceptor(e, url, reject);
                         });
-                        if(method === "POST" || method === "PUT"){
+                        if (method === "POST" || method === "PUT") {
                             req.write(body);
                             req.end();
-                        }else{
+                        } else {
                             req.end()
                         }
                     } else {
@@ -236,24 +230,20 @@ class requestHandler {
                         }
 
                         xhr.onload = function () {
-                            let body: BodyInit = JSON.stringify(xhr.response);
+                            let body: BodyInit = xhr.response;
                             let response = new Response(body, {
                                 status: xhr.status,
                                 statusText: xhr.statusText,
-                                headers: instance.parseHeaders(xhr.getAllResponseHeaders()),
+                                headers: instance.parseHeaders(xhr.getAllResponseHeaders(), url),
                             });
-                            if (xhr.status <= 200) {
-                                const end = performance.now();
-                                if (defaults.controller || headers.timeout > 0) {
-                                    defaults.abortControllers.delete(key);
-                                }
-                                if (defaults.postRequestHook !== null) {
-                                    defaults.postRequestHook(response, resolve, reject)
-                                } else {
-                                    instance.responseInterceptor(start, end, response, headers, resolve, reject);
-                                }
+                            const end = performance.now();
+                            if (defaults.controller || headers.timeout > 0) {
+                                defaults.abortControllers.delete(key);
+                            }
+                            if (defaults.postRequestHook !== null) {
+                                defaults.postRequestHook(response, resolve, reject)
                             } else {
-                                console.error('Failed to upload file');
+                                instance.responseInterceptor(start, end, response, headers, resolve, reject);
                             }
                         };
 
@@ -287,7 +277,13 @@ class requestHandler {
                 }
             })
         } else {
-            throw new ReasyError(errorMessage(isValidParams), 422);
+            return new Promise((resolve, reject) => {
+                reject({
+                    "status": "failure",
+                    "message": errorMessage(isValidParams)
+                })
+            })
+            // throw new ReasyError(errorMessage(isValidParams), 422);
         }
     }
 
@@ -301,9 +297,18 @@ class requestHandler {
 
 
     get(url: string | URL = "", headers: TypedJSONObject = {}) {
-        url = this.validateURL(url);
-        headers = this.constructHeaders("GET", headers, {});
-        return this.sendRequest(url, headers)
+        try {
+            url = this.validateURL(url);
+            headers = this.constructHeaders("GET", headers, {});
+            return this.sendRequest(url, headers)
+        } catch (error: any) {
+            return new Promise((resolve, reject) => {
+                reject({
+                    "status": "failure",
+                    "message": error.message
+                })
+            })
+        }
     }
 
     post(url: string | URL = "", body: TypedJSONObject = {}, headers: TypedJSONObject = {}) {
@@ -330,21 +335,23 @@ class requestHandler {
         return this.sendRequest(url, headers)
     }
 
-    private constructHeaders(method: string, headers: TypedJSONObject, body: TypedJSONObject, isFile: boolean = false): TypedJSONObject {
+    private constructHeaders(method: string, headers: TypedJSONObject | FormData, body: TypedJSONObject): TypedJSONObject {
         let res: TypedJSONObject = {
             ...headers,
             ...this.getHeaders(),
             "method": method
         }
-        if (!isFile) {
-        }
-        if (JSON.stringify(body) !== "{}") {
-            res.body = JSON.stringify(body)
+        if(body instanceof FormData){
+            res.body = body
+        }else{
+            if (JSON.stringify(body) !== "{}") {
+                res.body = JSON.stringify(body)
+            }
         }
         return res;
     }
 
-    private convertHeaders(headers: http.IncomingHttpHeaders): HeadersInit {
+    private convertHeaders(headers: any, url?: URL | string): HeadersInit {
         const convertedHeaders: HeadersInit = {};
         Object.entries(headers).forEach(([name, value]) => {
             if (typeof value === 'string') {
@@ -353,25 +360,38 @@ class requestHandler {
                 convertedHeaders[name] = value.join(', ');
             }
         });
+        if (url) {
+            if (typeof url === "string") {
+                convertedHeaders.url = url
+            } else {
+                convertedHeaders.url = url.href
+            }
+        }
         return convertedHeaders;
     }
 
-    private parseHeaders(headersStr: string) {
+    private parseHeaders(headersStr: string, url: string | URL) {
         const headers: TypedJSONObject = {};
         const headerLines = headersStr.trim().split('\n');
         headerLines.forEach((line: any) => {
-          const parts = line.split(':');
-          const key = parts.shift().trim();
-          const value = parts.join(':').trim();
-          headers[key] = value;
+            const parts = line.split(':');
+            const key = parts.shift().trim();
+            const value = parts.join(':').trim();
+            headers[key] = value;
         });
-        return this.convertHeaders(headers);
+        return this.convertHeaders(headers, url);
     }
 
     // Fires multiple HTTP/HTTPS requests
     async all(requestList: any) {
         if (!Array.isArray(requestList)) {
-            throw new ReasyError(errorMessage("Request List"), 422);
+            return new Promise((resolve, reject) => {
+                reject({
+                    "status": "failure",
+                    "message": errorMessage("Request List")
+                })
+            })
+            // throw new ReasyError(errorMessage("Request List"), 422);
         }
         return new Promise((resolve, reject) => {
             let responseData: Array<Response | TypedJSONObject> = [];
@@ -401,7 +421,7 @@ class requestHandler {
         })
     }
 
-    file(url: string | URL = "", body: TypedJSONObject, headers: TypedJSONObject = {}){
+    file(url: string | URL = "", body: TypedJSONObject | FormData, headers: TypedJSONObject = {}) {
         return {
             upload: () => this.fileupload(url, body, headers),
             update: () => this.fileupdate(url, body, headers),
@@ -409,21 +429,21 @@ class requestHandler {
         }
     }
     // File Upload APIs
-    private fileupload(url: string | URL = "", body: TypedJSONObject, headers: TypedJSONObject = {}) {
+    private fileupload(url: string | URL = "", body: TypedJSONObject | FormData, headers: TypedJSONObject = {}) {
         url = this.validateURL(url);
-        headers = this.constructHeaders("POST", headers, body, true);
+        headers = this.constructHeaders("POST", headers, body);
         return this.sendRequest(url, headers, true)
     }
 
     private fileupdate(url: string | URL = "", body: TypedJSONObject, headers: TypedJSONObject = {}) {
         url = this.validateURL(url);
-        headers = this.constructHeaders("PUT", headers, body, true);
+        headers = this.constructHeaders("PUT", headers, body);
         return this.sendRequest(url, headers, true)
     }
 
-    private downloadFile(url: string | URL = "", headers: TypedJSONObject = {}){
+    private downloadFile(url: string | URL = "", headers: TypedJSONObject = {}) {
         url = this.validateURL(url);
-        headers = this.constructHeaders("GET", headers, {}, true);
+        headers = this.constructHeaders("GET", headers, {});
         return this.sendRequest(url, headers, true)
     }
 }

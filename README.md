@@ -265,3 +265,8 @@
     ```js
     reazi.erase.abortController()
     ```
+
+<br/>
+
+### For Vanilla JS, You can include the following script which contains the cdn to use reazi
+```<script src="https://cdn.jsdelivr.net/gh/jquery/jquery@3.6/dist/jquery.min.js"></script>```

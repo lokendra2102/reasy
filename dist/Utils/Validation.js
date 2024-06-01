@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validateContentType = exports.checkIfValidJson = exports.checkIfValidParams = exports.isValidHeaders = exports.isValidUrl = exports.abortControllerNotRegisteredError = exports.errorMessage = void 0;
+exports.validateContentType = exports.checkIfValidJson = exports.checkIfValidParams = exports.isValidHeaders = exports.encodeQP = exports.isValidUrl = exports.abortControllerNotRegisteredError = exports.errorMessage = void 0;
 var errorMessage = function (data, isTimeout) {
     if (isTimeout === void 0) { isTimeout = false; }
     var err = "Invalid value for the argument ".concat(data, ".");
@@ -17,14 +17,37 @@ var isValidUrl = function (urlString) {
         return null;
     }
     try {
-        urlString = new URL(urlString);
-        return urlString.protocol === "http:" || urlString.protocol === "https:" ? urlString : null;
+        var regex = /^(https?|ftp|file):\/\/[^\s/$.?#].[^\s]*$/i;
+        urlString = urlString.toString();
+        if (regex.test(urlString)) {
+            return urlString.slice(-1) === "/" ? urlString.slice(0, -1) : urlString;
+        }
+        else {
+            return null;
+        }
     }
     catch (error) {
         return null;
     }
 };
 exports.isValidUrl = isValidUrl;
+var encodeQP = function (urlString) {
+    var queryString = urlString.split('?')[1];
+    if (queryString) {
+        var pairs = queryString.split('&');
+        var qps_1 = "";
+        if (pairs) {
+            pairs.forEach(function (pair) {
+                var _a = pair.split('='), key = _a[0], value = _a[1];
+                qps_1 += "".concat(encodeURIComponent(key), "=").concat(encodeURIComponent(value), "&");
+            });
+            pairs[1] = qps_1;
+        }
+        return pairs.join("?");
+    }
+    return urlString;
+};
+exports.encodeQP = encodeQP;
 var isValidHeaders = function (headers) {
     if (typeof headers === "string" || Array.isArray(headers)) {
         return false;

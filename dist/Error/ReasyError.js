@@ -16,7 +16,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReasyError = void 0;
-var ReasyError = /** @class */ (function (_super) {
+var ReasyError = (function (_super) {
     __extends(ReasyError, _super);
     function ReasyError(message, code) {
         var _this = _super.call(this, message) || this;

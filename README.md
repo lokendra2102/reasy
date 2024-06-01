@@ -1,6 +1,6 @@
-# 🚀 Reasy
+# 🚀 Reazi
 
-#### Reasy - Requests made Easy, is a light-weight promise bases HTTP client library. Reasy is made for javascript be it client or server side technologies (Isomorphic). It internally uses fetch API to make API calls over the network.
+#### Reazi - Requests made Easy, is a light-weight promise bases HTTP client library. reazi is made for javascript be it client or server side technologies (Isomorphic). It internally uses fetch API to make API calls over the network.
 
 ## 🌐  Features
 
@@ -17,7 +17,7 @@
 
 ### API Calls ✨ ✨
 
-### ***reasy.request*** instance can be used to make API calls to server/url using reasy.
+### ***reazi.request*** instance can be used to make API calls to server/url using reazi.
 - #### Instance
     - Instance() takes two parameters ***URL*** and ***headers***.
     - Instance can be create a request object and can be used to fire multiple API calls with same endpoint.
@@ -25,7 +25,7 @@
     \
     &nbsp;
     ```js
-    const instance = reasy.request.instance(URL, {
+    const instance = reazi.request.instance(URL, {
         "header": //method name,
         // other request headers
     })
@@ -43,9 +43,9 @@
     \
     &nbsp;
     ```js
-    reasy.request.get(URL, {
+    reazi.request.get(URL, {
         // other request headers
-    })
+    }, (true|false))
     ```
 - #### post()
     - Post() takes three parameters ***URL***, ***body*** and ***headers***.
@@ -55,11 +55,11 @@
     \
     &nbsp;
     ```js
-    reasy.request.post(URL, {
+    reazi.request.post(URL, {
         "data" : //data
     }, {
         // request headers
-    })
+    }, (true|false))
     ```
 - #### put()
     - Put() takes three parameters ***URL***, ***body*** and ***headers***.
@@ -69,11 +69,11 @@
     \
     &nbsp;
     ```js
-    reasy.request.put(URL, {
+    reazi.request.put(URL, {
         "data" : //data
     }, {
         // request headers
-    })
+    }, (true|false))
     ```
 - #### patch()
     - Patch() takes three parameters ***URL***, ***body*** and ***headers***.
@@ -83,11 +83,11 @@
     \
     &nbsp;
     ```js
-    reasy.request.patch(URL, {
+    reazi.request.patch(URL, {
         "data" : //data
     }, {
         // request headers
-    })
+    }, (true|false))
     ```
 - #### delete()
     - Delete() takes two parameters ***URL*** and ***headers***.
@@ -96,27 +96,33 @@
     \
     &nbsp;
     ```js
-    reasy.request.delete(URL, {
+    reazi.request.delete(URL, {
         // other request headers
-    })
+    }, (true|false))
     ```
 
 - #### all([])
-    - all([]) method is used to execute a series of API calls.
-    - Unlike default **Promise.all()** where all the requests are executed even if any one of it fails, We will abort all the active requests which helps to improve the performance and reduce server overhead. 
+    - **all([], (true | false))** method is used to execute a series of API calls.
+    - Unlike default **Promise.all()** where all the requests are executed even if any one of it fails, We will abort all the active requests which helps to improve the performance and reduce server overhead.
+
     - ***Example***
     \
     &nbsp;
     ```js
-    reasy.request.all([
-        reasy.request.get(URL, {
+    reazi.request.all([
+        reazi.request.get(URL, {
             // request headers
-        }),
-        reasy.request.get(URL, {
+        }, true),
+        reazi.request.get(URL, {
             // request headers
-        })
+        }, true)
     ])
     ```
+    > ***Note1*** : While making concurrent API calls it is mandatory to specify whether to execute remaining requests incase any one fails. By default it is set to false. You can override it passing second param.\
+    > ***Note2*** : It is also mandatory to send **isConcurrent** param to let **reazi** know that current request is a concurrrent request. Because we store **abort** data in a Map, In any circumstances if it's misplaced it'll cause bloating unnecessary data. You can remove the same using ```reazi.erase.abortMap()```.
+
+
+
 ### File Upload ✨ ✨
 - #### upload() - POST
     - upload() takes three parameters ***URL***, ***body*** and ***headers***.
@@ -125,9 +131,9 @@
     \
     &nbsp;
     ```js
-    reasy.request.file(URL, body, {
+    reazi.request.file(URL, body, {
         // request headers
-    }).upload()
+    }, (true|false)).upload()
     ```
 
 - #### update() - PUT
@@ -137,9 +143,9 @@
     \
     &nbsp;
     ```js
-    reasy.request.file(URL, body, {
+    reazi.request.file(URL, body, {
         // request headers
-    }).update()
+    }, (true|false)).update()
     ```
 
 - #### download() - GET
@@ -150,49 +156,49 @@
     \
     &nbsp;
     ```js
-    reasy.request.file(URL, {}, {
+    reazi.request.file(URL, {}, {
         // request headers
-    }).download()
+    }, (true|false)).download()
     ```
 
 ### Registering Globals ✨ ✨
 
 - #### headers() 
-    - reasy.register.headers() method can be used to add defualt headers which will be passed to all the requests fired using reasy.
+    - reazi.register.headers() method can be used to add defualt headers which will be passed to all the requests fired using reazi.
     \
     &nbsp;
     ```js
-    reasy.register.headers({
+    reazi.register.headers({
         'header name' : 'header value',
         // other headers
     })
     ```
 
 - #### domain()
-    - reasy.register.domain() method can be used to add defualt domain which will be appended to all the requests fired using reasy.
+    - reazi.register.domain() method can be used to add defualt domain which will be appended to all the requests fired using reazi.
     \
     &nbsp;
     ```js
-    reasy.register.domain(URL)
+    reazi.register.domain(URL)
     ```
 
 - #### registerAbortController() 
-    - registerAbortController() method can be used to add global timeout for requests fired using reasy.
+    - registerAbortController() method can be used to add global timeout for requests fired using reazi.
     - This method requires `abortTime` param to be passed along.
     \
     &nbsp;
     ```js
-    reasy.register.abortController('{{Time in ms}}')
+    reazi.register.abortController('{{Time in ms}}')
     ```
 
 - #### postRequest() 
-    - reasy.interceptor.postRequest() method is an interceptor which can be used to override the default response handling of reasy as per user expects it to be.
+    - reazi.interceptor.postRequest() method is an interceptor which can be used to override the default response handling of reazi as per user expects it to be.
     
     ``This hook can modify only the response returned by the server. Unknown Error handling will not be modified such as aborting request.``
     \
     &nbsp;
     ```js
-    reasy.interceptor.postRequest((response, success, failure) => {
+    reazi.interceptor.postRequest((response, success, failure) => {
         if (!response.ok) {
             // Failure Callback
             failure(response); //send data between parenthesis
@@ -204,12 +210,12 @@
     ```
 
 - #### preRequest()
-    - reasy.interceptor.preRequest() method is an interceptor which can be used to modify the request before making the call.
+    - reazi.interceptor.preRequest() method is an interceptor which can be used to modify the request before making the call.
     - We will be using native [`Request`](https://developer.mozilla.org/en-US/docs/Web/API/Request) object. Refer the following article on how to modify [`Request`](https://developers.cloudflare.com/workers/examples/modify-request-property/).
     \
     &nbsp;
     ```js
-    reasy.interceptor.preRequest((request) => {
+    reazi.interceptor.preRequest((request) => {
         const newRequest = new Request(
             {modifiedChanges}, // Add changes need to be done before firing request.
             request
@@ -221,45 +227,41 @@
 ### Removing Globals ✨ ✨
 
 - #### headers() 
-    - reasy.erase.headers() method can be used to remove any defualt headers present in globalHeaders object.
+    - reazi.erase.headers() method can be used to remove any defualt headers present in globalHeaders object.
     \
     &nbsp;
     ```js
-    reasy.erase.headers()
+    reazi.erase.headers()
     ```
 
 - #### domain()
-    - reasy.erase.domain() method can be used to remove defualt domain added previously.
+    - reazi.erase.domain() method can be used to remove defualt domain added previously.
     \
     &nbsp;
     ```js
-    reasy.erase.domain()
+    reazi.erase.domain()
     ```
 
 - #### postRequest() 
-    - reasy.erase.postRequest() method is used to remove the post response hook interceptor and sets back to default response handling.
+    - reazi.erase.postRequest() method is used to remove the post response hook interceptor and sets back to default response handling.
     \
     &nbsp;
     ```js
-    reasy.erase.postRequest()
+    reazi.erase.postRequest()
     ```
 
 - #### preRequest()
-    - reasy.erase.preRequest() method is used to remove the pre request hook interceptor and sets back to default request handling.
+    - reazi.erase.preRequest() method is used to remove the pre request hook interceptor and sets back to default request handling.
     \
     &nbsp;
     ```js
-    reasy.erase.preRequest()
+    reazi.erase.preRequest()
     ```
 
 - #### abortController() 
-    - reasy.erase.removeAbortController() method will remove global timeout for requests fired using reasy. Timeout still can be used in request level.
+    - reazi.erase.removeAbortController() method will remove global timeout for requests fired using reazi. Timeout still can be used in request level.
     \
     &nbsp;
     ```js
-    reasy.erase.abortController()
+    reazi.erase.abortController()
     ```
-
-### 🗣️🗣️ &nbsp; For any issues kindly raise an issue or connect with me via LinkedIn.
-### <p style="text-align:center">➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖</p>
-## 📢  Will update Open Source Policy. 🔜

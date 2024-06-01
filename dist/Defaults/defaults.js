@@ -8,5 +8,6 @@ exports.defaults = {
     abortTime: false,
     preRequestHook: null,
     postRequestHook: null,
-    abortControllers: new Map()
+    abortControllers: new Map(),
+    allAbortControllers: new Map()
 };

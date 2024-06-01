@@ -6,6 +6,7 @@ interface defaultInterface {
     preRequestHook: null | Function,
     postRequestHook: null | Function,
     abortControllers: Map<number, any>;
+    allAbortControllers: Map<number, any>
 }
 
 export interface TypedJSONObject {
@@ -19,5 +20,6 @@ export const defaults: defaultInterface = {
     abortTime: false,
     preRequestHook: null,
     postRequestHook: null,
-    abortControllers: new Map<number, any>()
+    abortControllers: new Map<number, any>(),
+    allAbortControllers: new Map<number, any>()
 }
